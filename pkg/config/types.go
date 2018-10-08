@@ -20,6 +20,12 @@ import (
 // - environment variables
 // - flags
 type Config interface {
+	ViperConfig
+	DDConfigHelpers
+}
+
+// ViperConfig describes the API implemented by viper.Viper
+type ViperConfig interface {
 	Set(key string, value interface{})
 	SetDefault(key string, value interface{})
 	IsSet(key string) bool
@@ -59,8 +65,13 @@ type Config interface {
 	ConfigFileUsed() string
 
 	BindPFlag(key string, flag *pflag.Flag) error
+}
 
-	// Datadog specific
+// DDConfigHelpers describes the config helpers that are not provided by viper.Viper
+type DDConfigHelpers interface {
+	// GetConfigEnvVars returns a list of the non-sensitive env vars that the config supports
 	GetConfigEnvVars() []string
-	bindEnvAndSetDefault(key string, val interface{})
+	// BindEnvAndSetDefault sets the default value for a config parameter and adds an env binding
+	// in one call
+	BindEnvAndSetDefault(key string, val interface{})
 }

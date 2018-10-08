@@ -15,7 +15,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-// safeConfig wraps viper with a safety lock
+// safeConfig implements Config:
+// - wraps viper with a safety lock
+// - implements the DDConfigHelpers
 type safeConfig struct {
 	*viper.Viper
 	sync.RWMutex
@@ -135,7 +137,8 @@ func (c *safeConfig) GetSizeInBytes(key string) uint {
 	return c.Viper.GetSizeInBytes(key)
 }
 
-// SetEnvPrefix is wrapped for concurrent access
+// SetEnvPrefix is wrapped for concurrent access, and keeps the envPrefix for
+// future reference
 func (c *safeConfig) SetEnvPrefix(in string) {
 	c.Lock()
 	defer c.Unlock()
@@ -143,10 +146,17 @@ func (c *safeConfig) SetEnvPrefix(in string) {
 	c.envPrefix = in
 }
 
-// BindEnv is wrapped for concurrent access
+// BindEnv is wrapped for concurrent access, and adds tracking of the configurable env vars
 func (c *safeConfig) BindEnv(input ...string) error {
 	c.RLock()
 	defer c.RUnlock()
+	if len(input) == 1 {
+		key := input[0]
+		if !strings.Contains(key, "_key") {
+			envVarName := strings.Join([]string{c.envPrefix, strings.ToUpper(key)}, "_")
+			c.configEnvVars = append(c.configEnvVars, envVarName)
+		}
+	}
 	return c.Viper.BindEnv(input...)
 }
 
@@ -248,20 +258,15 @@ func (c *safeConfig) BindPFlag(key string, flag *pflag.Flag) error {
 	return c.Viper.BindPFlag(key, flag)
 }
 
-// GetConfigEnvVars returns a list of the non-sensitive env vars that the config supports
+// GetConfigEnvVars implements the DDConfigHelpers interface
 func (c *safeConfig) GetConfigEnvVars() []string {
 	return c.configEnvVars
 }
 
-// bindEnvAndSetDefault sets the default value for a config parameter, adds an env binding,
-// and tracks existing config env vars
-func (c *safeConfig) bindEnvAndSetDefault(key string, val interface{}) {
+// BindEnvAndSetDefault implements the DDConfigHelpers interface
+func (c *safeConfig) BindEnvAndSetDefault(key string, val interface{}) {
 	c.SetDefault(key, val)
 	c.BindEnv(key)
-	if !strings.Contains(key, "_key") {
-		envVarName := strings.Join([]string{c.envPrefix, strings.ToUpper(key)}, "_")
-		c.configEnvVars = append(c.configEnvVars, envVarName)
-	}
 }
 
 // NewConfig returns a new Config object.

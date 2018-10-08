@@ -390,11 +390,11 @@ func TestEnvNestedConfig(t *testing.T) {
 
 func TestBindEnvAndSetDefault(t *testing.T) {
 	config := setupConf()
-	config.bindEnvAndSetDefault("app_key", "")
+	config.BindEnvAndSetDefault("app_key", "")
 	assert.NotContains(t, config.GetConfigEnvVars(), "DD_APP_KEY")
-	config.bindEnvAndSetDefault("logset", "")
+	config.BindEnvAndSetDefault("logset", "")
 	assert.Contains(t, config.GetConfigEnvVars(), "DD_LOGSET")
-	config.bindEnvAndSetDefault("logs_config.run_path", "")
+	config.BindEnvAndSetDefault("logs_config.run_path", "")
 	assert.Contains(t, config.GetConfigEnvVars(), "DD_LOGS_CONFIG.RUN_PATH")
 }
 
