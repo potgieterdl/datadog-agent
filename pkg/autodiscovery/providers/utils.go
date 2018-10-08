@@ -104,16 +104,16 @@ func extractTemplatesFromMap(key string, input map[string]string, prefix string)
 	configs := make([]integration.Config, 0)
 
 	checksConfigs, err := extractCheckTemplatesFromMap(key, input, prefix)
-	if err != nil {
-		return configs, err
+	if err == nil {
+		log.Warnf("could not extract checks config from template: %v", err)
+		configs = append(configs, checksConfigs...)
 	}
-	configs = append(configs, checksConfigs...)
 
 	logsConfigs, err := extractLogsTemplatesFromMap(key, input, prefix)
-	if err != nil {
-		return configs, err
+	if err == nil {
+		log.Warnf("could not extract logs config from template: %v", err)
+		configs = append(configs, logsConfigs...)
 	}
-	configs = append(configs, logsConfigs...)
 
 	return configs, nil
 }
